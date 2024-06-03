@@ -1,50 +1,54 @@
 const bcrypt = require('bcryptjs');
-const readline = require('readline');
+const User = require('./models/User');
 
-let users = [];
-
-function registerUser(fullName, email, password, confirmPassword) {
+// Fungsi untuk mendaftarkan pengguna
+async function registerUser(fullName, email, password, confirmPassword, callback) {
     if (password !== confirmPassword) {
         console.log('Passwords do not match!');
-        return;
+        return callback();
     }
 
-    bcrypt.hash(password, 10, function(err, hashedPassword) {
-        if (err) {
-            console.log('Error hashing password!', err);
-            return;
+    try {
+        // Cek apakah email sudah terdaftar
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            console.log('Email already exists!');
+            return callback();
         }
 
-        // Simulate storing user data
-        const userData = {
-            fullName: fullName,
-            email: email,
-            password: hashedPassword
-        };
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Store the user in the global array
-        users.push(userData);
+        // Simpan pengguna baru
+        const newUser = await User.create({
+            fullName,
+            email,
+            password: hashedPassword,
+        });
 
-        // Simulate successful registration
         console.log('Registration successful!');
-        console.log('User Data:', userData);
-    });
+        console.log('User Data:', newUser);
+
+        callback();
+    } catch (err) {
+        console.error('Error registering user!', err);
+        callback();
+    }
 }
 
-function loginUser(email, password, rl) {
-    const user = users.find(user => user.email === email);
-    if (!user) {
-        console.log('User not found!');
-        return promptLogin(rl); // Retry login
-    }
-
-    bcrypt.compare(password, user.password, function(err, result) {
-        if (err) {
-            console.log('Error comparing passwords!', err);
-            return;
+// Fungsi untuk login pengguna
+async function loginUser(email, password, rl) {
+    try {
+        // Cari pengguna berdasarkan email
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            console.log('Email not found!');
+            return promptLogin(rl); // Retry login
         }
 
-        if (result) {
+        // Bandingkan password
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
             console.log('Login successful!');
             console.log('Welcome, ' + user.fullName);
             rl.close();
@@ -52,14 +56,34 @@ function loginUser(email, password, rl) {
             console.log('Incorrect password!');
             promptLogin(rl); // Retry login
         }
-    });
+    } catch (err) {
+        console.error('Error logging in user!', err);
+        promptLogin(rl); // Retry login
+    }
 }
 
 // Create readline interface for interactive input
+const readline = require('readline');
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+
+// Function to prompt user for registration details
+function promptRegister(rl) {
+    rl.question('Enter full name: ', (fullName) => {
+        rl.question('Enter email: ', (email) => {
+            rl.question('Enter password: ', (password) => {
+                rl.question('Confirm password: ', (confirmPassword) => {
+                    registerUser(fullName, email, password, confirmPassword, () => {
+                        console.log('\nPlease enter your login details:');
+                        promptLogin(rl);
+                    });
+                });
+            });
+        });
+    });
+}
 
 // Function to prompt user for login details
 function promptLogin(rl) {
@@ -70,16 +94,6 @@ function promptLogin(rl) {
     });
 }
 
-// Simulate user registration for testing
-const fullName = 'Capstone Test';
-const email = 'capstoneee@mail.com';
-const password = 'password12340';
-const confirmPassword = 'password12340';
-
-registerUser(fullName, email, password, confirmPassword);
-
-// Simulate a delay to ensure the user is registered before prompting for login
-setTimeout(() => {
-    console.log('\nPlease enter your login details:');
-    promptLogin(rl);
-}, 2000);
+// Start the registration process
+console.log('Please enter your registration details:');
+promptRegister(rl);
