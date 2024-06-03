@@ -1,36 +1,44 @@
-const users = require("./users");
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
 
-const addUserLoginList = (request, h) => {
-    const { username, password } = request.payload;
-   
-    const createdAt = new Date().toISOString();
+const addUserLoginList = async (request, h) => {
+    const { fullName, email, password } = request.payload;
 
-    const newUsers = {
-      username, password, createdAt
-    };
-   
-    users.push(newUsers);
-   
-    const isSuccess = users.filter((users) => users.username === username).length > 0;
-   
-    if (isSuccess) {
-      const response = h.response({
-        status: 'success',
-        message: 'pendaftaran berhasil',
-        data: {
-          username: username,
-          password: password
-        },
-      });
-      response.code(201);
-      return response;
+    try {
+        // Cek apakah email sudah terdaftar
+        const existingUser = await User.findOne({ where: { email } });
+
+        if (existingUser) {
+            return h.response({
+                status: 'fail',
+                message: 'Email already exists',
+            }).code(400);
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Simpan pengguna baru
+        const newUser = await User.create({
+            fullName,
+            email,
+            password: hashedPassword,
+        });
+
+        return h.response({
+            status: 'success',
+            message: 'User registered successfully',
+            data: {
+                email: newUser.email,
+            },
+        }).code(201);
+    } catch (err) {
+        console.error(err);
+        return h.response({
+            status: 'fail',
+            message: 'Internal Server Error',
+        }).code(500);
     }
-    const response = h.response({
-      status: 'fail',
-      message: 'Pendaftaran gagal',
-    });
-    response.code(500);
-    return response;
-  };
-  
+};
+
 module.exports = { addUserLoginList };
