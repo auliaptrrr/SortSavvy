@@ -2,10 +2,10 @@ const { addUserLoginList } = require('./handler');
 
 const routes = [
     {
-      method: 'POST',
-      path: '/users',
-      handler: addUserLoginList,
+        method: 'POST',
+        path: '/users',
+        handler: addUserLoginList,
     },
-  ];
-   
-  module.exports = routes;
+];
+
+module.exports = routes;
