@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const User = require('./models/User');
+const User = require('./User');
 
 // Fungsi untuk mendaftarkan pengguna
 async function registerUser(fullName, email, password, confirmPassword, callback) {
