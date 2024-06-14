@@ -12,7 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@hapi/hapi": "^21.3.9",
-    "bcryptjs": "^2.4.3"
+    "@hapi/hapi": "^21.3.10",
+    "bcryptjs": "^2.4.3",
+    "sequelize": "^6.37.3"
   }
 }

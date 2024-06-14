@@ -1,5 +1,6 @@
 const User = require('./User');
 const bcrypt = require('bcryptjs');
+const explore = require('.explore/explore');
 
 const addUserLoginList = async (request, h) => {
     const { fullName, email, password } = request.payload;
@@ -41,4 +42,11 @@ const addUserLoginList = async (request, h) => {
     }
 };
 
-module.exports = { addUserLoginList };
+const getAllWasteClass = () => ({
+    status: 'success',
+    data: {
+        explore,
+    },
+});
+
+module.exports = { addUserLoginList,getAllWasteClass };
